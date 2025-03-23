@@ -19,36 +19,28 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
 def is_engaged(image_path):
     image = cv2.imread(image_path)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    faces = detector(gray)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
     
-    for face in faces:
-        landmarks = predictor(gray, face)
-        landmarks = face_utils.shape_to_np(landmarks)
+    if len(faces) == 0:
+        return "No Face Detected"
+    
+    for (x, y, w, h) in faces:
+        face_roi = gray[y:y+h, x:x+w]
+        eyes_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
+        eyes = eyes_cascade.detectMultiScale(face_roi)
         
-        left_eye = landmarks[42:48]
-        right_eye = landmarks[36:42]
-        
-        left_eye_ratio = eye_aspect_ratio(left_eye)
-        right_eye_ratio = eye_aspect_ratio(right_eye)
-        eye_ratio = (left_eye_ratio + right_eye_ratio) / 2.0
-        
-        if eye_ratio < 0.2:
-            print("Not Engaged (Eyes Closed)")
-            return "Not Engaged (Eyes Closed)"
-        
-        face_direction = face_orientation(landmarks)
-        if face_direction == "Front":
-            print("Engaged (Looking at Camera)")
+        if len(eyes) >= 2:
             return "Engaged (Looking at Camera)"
-            
         else:
-            print("Not Engaged (Looking Away)")
-            return "Not Engaged (Looking Away)"
-    print("No Face Detected")
-    return "No Face Detected"
+            return "Not Engaged (Eyes Closed or Looking Away)"
+    
+    return "Not Engaged"
+
 
 def eye_aspect_ratio(eye):
     A = np.linalg.norm(eye[1] - eye[5])
@@ -96,6 +88,7 @@ def upload_image():
             f.write(image_bytes)
         
         engagement_status = is_engaged(filename)
+        print(engagement_status)
         metadata_filename = filename.replace(".jpg", ".txt")
         
         with open(metadata_filename, "w") as f:

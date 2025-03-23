@@ -28,37 +28,43 @@ const WebcamCapture: React.FC = () => {
   };
 
   useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    
     if (capturing) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         captureAndSend();
       }, 6000); // Capture every 60 seconds
-
-      return () => clearInterval(interval); // Cleanup interval on unmount
+    } else {
+      // Stop the webcam when capturing is false
+      if (webcamRef.current && webcamRef.current.video) {
+        const stream = webcamRef.current.video.srcObject as MediaStream;
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop()); // Stop all tracks
+        }
+      }
     }
+
+    return () => {
+      if (interval) clearInterval(interval); // Cleanup interval on unmount
+    };
   }, [capturing]);
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <Webcam
-        audio={false}
-        ref={webcamRef}
-        screenshotFormat="image/jpeg"
-        className="w-96 h-64 border border-gray-300 rounded-lg"
-        // style={{ display: "none" }} // Hides the video feed
-        // style={{ width: 0, height: 0, position: "absolute" }} // Keeps it functional but hidden
-        // style={{
-        //   position: "absolute",
-        //   top: "-9999px", // Moves it off-screen
-        //   opacity: 0, // Makes it invisible
-        //   pointerEvents: "none", // Prevents interactions
-        // }}
-        style={{
-          visibility: "hidden", // Hides it but keeps rendering
-          position: "absolute", 
-          // width: "200px", // Maintain a small size
-          // height: "150px",
-        }}
-      />
+      {capturing && (
+        <Webcam
+          audio={false}
+          ref={webcamRef}
+          screenshotFormat="image/jpeg"
+          className="w-96 h-64 border border-gray-300 rounded-lg"
+          style={{
+            visibility: "hidden", // Hides it but keeps rendering
+            position: "absolute", 
+            // width: "200px", // Maintain a small size
+            // height: "150px",
+          }}
+        />
+      )}
       <button
         onClick={() => setCapturing((prev) => !prev)}
         className="mt-4 p-2 bg-blue-500 text-white rounded"
