@@ -11,12 +11,17 @@ const WebcamCapture: React.FC = () => {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
         try {
-          const response = await fetch("http://127.0.0.1:5000/upload", {
+
+          const response1 = await fetch("http://127.0.0.1:5000/users");
+          const data1 = await response1.json();
+
+
+          const response = await fetch("http://127.0.0.1:5000/data", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ image: imageSrc }),
+            body: JSON.stringify({ image: imageSrc, userId:data1.userId, courseId:data1.courseId }),
           });
           const data = await response.json();
           console.log("Server response:", data);
@@ -28,7 +33,9 @@ const WebcamCapture: React.FC = () => {
   };
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
+    // let interval: NodeJS.Timeout | undefined;
+    let interval: number | undefined;
+
     
     if (capturing) {
       interval = setInterval(() => {

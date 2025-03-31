@@ -34,7 +34,7 @@ def is_engaged(image_path):
         eyes_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
         eyes = eyes_cascade.detectMultiScale(face_roi)
         
-        if len(eyes) >= 2:
+        if len(eyes) >= 1:
             return "Engaged (Looking at Camera)"
         else:
             return "Not Engaged (Eyes Closed or Looking Away)"
@@ -67,6 +67,26 @@ def face_orientation(landmarks):
 @app.route("/")
 def hello():
     return jsonify({"Hello":" World!"})
+
+@app.route("/users",methods=["GET","POST"])
+def getUsers():
+    return jsonify({"userId":"nuwan","courseId":2302 })
+
+@app.route("/data",methods=["POST"])
+def incomingData():
+    data=request.get_json()
+    print(data.get("userId"), data.get("courseId"))
+    # print(data.get("image"))
+    image_data = data.get("image")
+
+    if not image_data:
+        return jsonify({"error": "No image data received"}), 400
+
+    image_data = image_data.split(",")[1]
+    image_bytes = base64.b64decode(image_data)
+    with open("imageTextK.txt", "wb") as f:
+        f.write(image_bytes)
+    return jsonify(data)
 
 @app.route("/upload", methods=["POST"])
 def upload_image():
