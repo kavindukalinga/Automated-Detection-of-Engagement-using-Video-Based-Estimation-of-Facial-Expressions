@@ -63,3 +63,8 @@ rmdir /s /q myenv
 ```sh
 python -m uvicorn src.api:app --reload
 ```
+
+
+## Research Notes:
+
+> I've improved the eye detection accuracy by using haarcascade_eye_tree_eyeglasses.xml, which is better suited for low-quality webcam images and works even if the person is wearing glasses. I also adjusted the scale factor and minNeighbors for more reliable detection. Let me know if you need further refinements!
